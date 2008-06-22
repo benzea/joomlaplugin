@@ -28,9 +28,6 @@ class ACL:
 		conn = db.get_connection(self._module)
 		cursor = conn.cursor()
 		
-		import sys
-		print >>sys.stderr, group
-
 		table = db.table_name(self._module, "core_acl_aro_groups")
 		sql = "SELECT lft FROM %s WHERE name=%%s" % (table)
 		cursor.execute(sql, group)
