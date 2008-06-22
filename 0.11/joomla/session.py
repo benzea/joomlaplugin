@@ -1,35 +1,41 @@
 
-import db
-import sys
+import database
 import md5
 import Cookie
 
-class Session:
-	def __init__(self, module, request):
+
+class JoomlaSession:
+	#implements(IJoomlaSession)
+	
+	def __init__(self, config, req):
 		self._username = None
 		self._guest = True
 		self._uid = 0
 		self._gid = 0
 		self._usertype = None
-
 		self._session_id = None
-		self._module = module
-		self._req = request
 
-		self._load_from_cookie()
+		self._config = config
+		self._req = req
+
+		self._session_lifetime = self._config.get("session_lifetime")
+		self._hash_secret = self._config.get("hash_secret")
+		self._live_site = self._config.get("live_site")
+
+		self._load()
 	
-	def _load_from_cookie(self):
-		conn = db.get_connection(self._module)
-		cursor = conn.cursor()
+	def _load(self):
+		db = database.get_instance(self._config)
+		cursor = db.cursor()
 		
-		table = db.table_name(self._module, "session")
+		table = db.table_name("session")
 
 		session_id = self._get_session_id()
 		if not session_id:
 			return
 
 		sql = "SELECT username, guest, userid, usertype, gid FROM %s WHERE session_id=%%s AND time >= (UNIX_TIMESTAMP()-%i);" \
-		       % (table, self._module.session_lifetime)
+		       % (table, self._session_lifetime)
 		cursor.execute(sql, (session_id))
 		if cursor.rowcount > 1:
 			raise AssertionError
@@ -45,10 +51,10 @@ class Session:
 		self._gid = row[4]
 
 	def update_timestamp(self):
-		conn = db.get_connection(self._module)
-		cursor = conn.cursor()
+		db = database.get_instance(self._config)
+		cursor = db.cursor()
 		
-		table = db.table_name(self._module, "session")
+		table = db.table_name("session")
 
 		session_id = self._get_session_id()
 		if not session_id:
@@ -78,17 +84,17 @@ class Session:
 		hash.update(self._req.environ["HTTP_USER_AGENT"])
 
 		session_hash = md5.md5()
-		session_hash.update(self._module.hash_secret)
+		session_hash.update(self._hash_secret)
 		session_hash.update(hash.hexdigest())
 
 		self._session_id = session_hash.hexdigest()
 		return self._session_id
 
 	def _get_cookie_name(self):
-		if not self._module.live_site:
+		if not self._live_site:
 			server_name = self._req.environ["HTTP_HOST"]
 		else:
-			server_name = self._module.live_site
+			server_name = self._live_site
 
 		hash = md5.md5("site" + server_name)
 		return hash.hexdigest()

@@ -24,7 +24,8 @@ setup(
     
     entry_points = {
         'trac.plugins': [
-            'joomla.module = joomla.module',
+            'joomla.authenticator = joomla.authenticator',
+            'joomla.authz_policy = joomla.authz_policy',
         ],
     },
 )
