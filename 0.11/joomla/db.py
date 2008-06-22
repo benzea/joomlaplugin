@@ -1,15 +1,14 @@
 
 import MySQLdb
-import joomla_config as config
 
 _connection = None
 
-def table_name(table):
-    return config.TABLE_PREFIX + table
+def table_name(module, table):
+    return module.table_prefix + table
 
-def get_connection():
+def get_connection(module):
     global _connection
     if not _connection:
-        _connection = MySQLdb.connect(user=config.MYSQL_USER, passwd=config.MYSQL_PASS, db=config.MYSQL_DB)
+        _connection = MySQLdb.connect(user=module.mysql_user, passwd=module.mysql_pass, db=module.mysql_db)
     
     return _connection

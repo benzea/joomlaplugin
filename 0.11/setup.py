@@ -24,7 +24,7 @@ setup(
     
     entry_points = {
         'trac.plugins': [
-            'joomla.trac = joomla.trac',
+            'joomla.module = joomla.module',
         ],
     },
 )
