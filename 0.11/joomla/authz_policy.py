@@ -198,7 +198,7 @@ class JoomlaAuthzPolicy(Component):
 
 	def get_user_groups(self, username):
 		groups = self.groups_by_user.get(username, [])
-		for group in self.acl.get_user_groups(username):
+		for group in self.acl.get_user_groups(name=username).values():
 			groups.append('@' + group)
 		return groups
 

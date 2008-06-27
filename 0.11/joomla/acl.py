@@ -5,85 +5,63 @@ class JoomlaACL:
 		self._config = config
 		self._min_aro_group = self._config.get("aro_group")
 
-	def is_allowed(self, uid):
-		gid = self.get_user_gid_by_uid(uid)
-		
-		lft = self.get_group_lft_by_id(gid)
-		min_lft = self.get_group_lft_by_name(self._min_aro_group)
+	def login_allowed(self, id=None, name=None):
+		gid = self.get_user_gid(id=id, name=name)
 
-		return lft >= min_lft
+		groups = self.get_child_groups(name=self._min_aro_group)
+		return groups.has_key(gid)
 
-
-	def get_user_gid_by_name(self, username):
-		db = database.get_instance(self._config)
-		cursor = db.cursor()
-		
-		user_table = db.table_name("users")
-		sql = "SELECT gid FROM %s WHERE username=%%s" % (user_table)
-		cursor.execute(sql, username)
-
-		if cursor.rowcount == 0:
-			return 0
-
-		gid = cursor.fetchone()[0]
-		return gid
-
-	def get_user_gid_by_uid(self, uid):
-		db = database.get_instance(self._config)
-		cursor = db.cursor()
-		
-		user_table = db.table_name("users")
-		sql = "SELECT gid FROM %s WHERE id=%%s" % (user_table)
-		cursor.execute(sql, uid)
-
-		if cursor.rowcount == 0:
-			return 0
-
-		gid = cursor.fetchone()[0]
-		return gid
-
-	def get_group_lft_by_name(self, group):
+	def get_child_groups(self, id=None, name=None):
 		db = database.get_instance(self._config)
 		cursor = db.cursor()
 		
 		table = db.table_name("core_acl_aro_groups")
-		sql = "SELECT lft FROM %s WHERE name=%%s" % (table)
-		cursor.execute(sql, group)
+		sql = """
+		      SELECT child.group_id, child.name FROM %(table)s
+		      parent LEFT JOIN %(table)s child ON parent.lft >= child.lft AND parent.lft <= child.rgt
+		      """ % { 'table': table}
+		if id:
+			sql += "WHERE parent.group_id = %s"
+			param = str(id)
+		elif name:
+			sql += "WHERE parent.name = %s"
+			param = name
+		else:
+			raise AssertionError
 
-		if cursor.rowcount == 0:
-			return 0
+		cursor.execute(sql, param)
 
-		return cursor.fetchone()[0]
-
-	def get_group_lft_by_id(self, gid):
-		db = database.get_instance(self._config)
-		cursor = db.cursor()
-		
-		table = db.table_name("core_acl_aro_groups")
-		sql = "SELECT lft FROM %s WHERE group_id=%%s" % (table)
-		cursor.execute(sql, gid)
-
-		if cursor.rowcount == 0:
-			return 0
-
-		return cursor.fetchone()[0]
-
-
-	def get_user_groups(self, username):
-		gid = self.get_user_gid_by_name(username)
-		lft = self.get_group_lft_by_id(gid)
-
-		db = database.get_instance(self._config)
-		cursor = db.cursor()
-		
-		table = db.table_name("core_acl_aro_groups")
-		sql = "SELECT name FROM %s WHERE lft<=%%s" % table
-		cursor.execute(sql, lft)
-
-		groups = []
-
+		result = {}
 		for row in cursor.fetchall():
-			groups.append(row[0])
+			result[row[0]] = row[1]
+		return result
+		
 
-		return groups
+	def get_user_gid(self, id=None, name=None):
+		db = database.get_instance(self._config)
+		cursor = db.cursor()
+		
+		user_table = db.table_name("users")
+		if id:
+			sql = "SELECT gid FROM %s WHERE id=%%s" % user_table
+			param = id
+		elif name:
+			sql = "SELECT gid FROM %s WHERE username=%%s" % user_table
+			param = name
+		else:
+			raise AssertionError
+
+		cursor.execute(sql, param)
+
+		if cursor.rowcount == 0:
+			return None
+
+		gid = cursor.fetchone()[0]
+
+		return gid
+
+	def get_user_groups(self, id=None, name=None):
+		gid = self.get_user_gid(id=id, name=name)
+
+		return self.get_child_groups(id=gid)
 

@@ -23,7 +23,7 @@ class JoomlaAuthenticator(Component):
 
 		if session.get_username():
 			acl = JoomlaACL(self.config)
-			if acl.is_allowed(session.get_uid()):
+			if acl.login_allowed(id=session.get_uid()):
 				session.update_timestamp()
 			else:
 				return None
