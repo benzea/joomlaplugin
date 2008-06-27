@@ -8,6 +8,9 @@ class JoomlaACL:
 	def login_allowed(self, id=None, name=None):
 		gid = self.get_user_gid(id=id, name=name)
 
+		if not gid:
+			return False
+
 		groups = self.get_child_groups(name=self._min_aro_group)
 		return groups.has_key(gid)
 
@@ -62,6 +65,8 @@ class JoomlaACL:
 
 	def get_user_groups(self, id=None, name=None):
 		gid = self.get_user_gid(id=id, name=name)
+		if not gid:
+			return {}
 
 		return self.get_child_groups(id=gid)
 
