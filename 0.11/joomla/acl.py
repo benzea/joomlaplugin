@@ -18,7 +18,7 @@ class JoomlaACL:
 		table = db.table_name("core_acl_aro_groups")
 		sql = """
 		      SELECT child.group_id, child.name FROM %(table)s
-		      parent LEFT JOIN %(table)s child ON parent.lft >= child.lft AND parent.lft <= child.rgt
+		      parent LEFT JOIN %(table)s child ON parent.lft <= child.lft AND parent.rgt >= child.rgt
 		      """ % { 'table': table}
 		if id:
 			sql += "WHERE parent.group_id = %s"
