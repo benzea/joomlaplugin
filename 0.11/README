@@ -1,1 +1,3 @@
 Plugin to integrate trac with joomla.
+
+Create the .egg file for trac by running ./setup.py bdist_egg.
