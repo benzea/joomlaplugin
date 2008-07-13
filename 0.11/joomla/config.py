@@ -13,7 +13,7 @@ class JoomlaConfig(Component):
 	mysql_pass = Option("joomla", "mysql_pass", doc="The password to use to open the MySQL connection.")
 	database = Option("joomla", "database", doc="The database to open.")
 	table_prefix = Option("joomla", "table_prefix", doc="The table prefix to use.")
-	aro_group = Option("joomla", "aro_group", doc="The minimum ARO Joomla Group that a user needs to have (will be downgraded to anonymous otherwise).")
+	aro_groups = ListOption("joomla", "aro_groups", doc="The minimum ARO Joomla Group that a user needs to have (will be downgraded to anonymous otherwise). This can be a list of allowed groups.")
 	authz_file = Option('joomla', 'authz_file', None, 'Location of authz policy configuration file.')
 
 	implements(IJoomlaConfig)
@@ -33,8 +33,8 @@ class JoomlaConfig(Component):
 			return self.database
 		elif option == "table_prefix":
 			return self.table_prefix
-		elif option == "aro_group":
-			return self.aro_group
+		elif option == "aro_groups":
+			return self.aro_groups
 		elif option == "authz_file":
 			return self.authz_file
 
