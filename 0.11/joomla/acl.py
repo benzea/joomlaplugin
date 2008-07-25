@@ -42,6 +42,30 @@ class JoomlaACL:
 			result[row[0]] = row[1]
 		return result
 		
+	def get_parent_groups(self, id=None, name=None):
+		db = database.get_instance(self._config)
+		cursor = db.cursor()
+		
+		table = db.table_name("core_acl_aro_groups")
+		sql = """
+		      SELECT child.group_id, child.name FROM %(table)s
+		      parent LEFT JOIN %(table)s child ON parent.lft >= child.lft AND parent.rgt <= child.rgt
+		      """ % { 'table': table}
+		if id:
+			sql += "WHERE parent.group_id = %s"
+			param = str(id)
+		elif name:
+			sql += "WHERE parent.name = %s"
+			param = name
+		else:
+			raise AssertionError
+
+		cursor.execute(sql, param)
+
+		result = {}
+		for row in cursor.fetchall():
+			result[row[0]] = row[1]
+		return result
 
 	def get_user_gid(self, id=None, name=None):
 		db = database.get_instance(self._config)
@@ -71,5 +95,5 @@ class JoomlaACL:
 		if not gid:
 			return {}
 
-		return self.get_child_groups(id=gid)
+		return self.get_parent_groups(id=gid)
 
