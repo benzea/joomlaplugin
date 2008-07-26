@@ -231,7 +231,7 @@ class JoomlaAuthzPolicy(Component):
 		for resource_section in [a for a in self.authz.sections
 								 if a != 'groups']:
 			resource_glob = resource_section
-			if '@' not in resource_glob:
+			if resource_glob != '*' and '@' not in resource_glob:
 				resource_glob += '@*'
 
 			if fnmatch(resource_key, resource_glob):
