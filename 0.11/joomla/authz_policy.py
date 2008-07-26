@@ -171,6 +171,7 @@ class JoomlaAuthzPolicy(Component):
 		ps = PermissionSystem(self.env)
 		for deny, perms in groupby(permissions,
 									key=lambda p: p.startswith('!')):
+			perms = list(perms)
 			if deny and action in ps.expand_actions([p[1:] for p in perms]):
 				return False			# action is explicitly denied
 			elif action in ps.expand_actions(perms):
