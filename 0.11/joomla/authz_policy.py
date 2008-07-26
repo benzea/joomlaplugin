@@ -198,7 +198,7 @@ class JoomlaAuthzPolicy(Component):
 		self.authz_mtime = os.path.getmtime(self.get_authz_file())
 
 	def get_user_groups(self, username):
-		groups = self.groups_by_user.get(username, [])
+		groups = self.groups_by_user.get(username, set())
 		for group in self.acl.get_user_groups(name=username).values():
 			groups.add('@' + group)
 		return groups
