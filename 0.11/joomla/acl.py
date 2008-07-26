@@ -11,9 +11,10 @@ class JoomlaACL:
 		if not gid:
 			return False
 
+		groups = self.get_parent_groups(id=gid)
+		groups = groups.values()
 		for group in self._min_aro_groups:
-			groups = self.get_child_groups(name=group)
-			if groups.has_key(gid):
+			if group in groups:
 				return True
 		return False
 
