@@ -15,6 +15,8 @@ class JoomlaConfig(Component):
 	table_prefix = Option("joomla", "table_prefix", doc="The table prefix to use.")
 	aro_groups = ListOption("joomla", "aro_groups", doc="The minimum ARO Joomla Group that a user needs to have (will be downgraded to anonymous otherwise). This can be a list of allowed groups.")
 	authz_file = Option('joomla', 'authz_file', None, 'Location of authz policy configuration file.')
+	login_url = Option('joomla', 'login_url', None, 'Location that users are redirected if they press on the login button. If not set, no login link will appear.')
+	logout_url = Option('joomla', 'logout_url', None, 'Location that users are redirected if they press on the logout button. If not set, no logout link will appear.')
 
 	implements(IJoomlaConfig)
 	
@@ -37,5 +39,9 @@ class JoomlaConfig(Component):
 			return self.aro_groups
 		elif option == "authz_file":
 			return self.authz_file
+		elif option == "login_url":
+			return self.login_url
+		elif option == "logout_url":
+			return self.logout_url
 
 		return None
