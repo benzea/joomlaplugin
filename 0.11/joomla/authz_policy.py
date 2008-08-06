@@ -153,7 +153,7 @@ class JoomlaAuthzPolicy(Component):
 	def __init__(self):
 		self.config = self.configs[0]
 		self.acl = JoomlaACL(self.config)
-		self.authz_file = self.config.get("authz_file")
+		self.authz_file = self.config.authz_file
 	
 	def check_permission(self, action, username, resource, perm):
 		if self.authz_file and not self.authz_mtime or \

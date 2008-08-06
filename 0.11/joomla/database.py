@@ -4,15 +4,14 @@ from trac.config import *
 import MySQLdb
 
 class DB:
-
 	def __init__(self, config):
 		self._config = config
 		self._connection = None
 		
-		self._mysql_user = self._config.get("mysql_user")
-		self._mysql_pass = self._config.get("mysql_pass")
-		self._mysql_db = self._config.get("database")
-		self._table_prefix = self._config.get("table_prefix")
+		self._mysql_user = self._config.mysql_user
+		self._mysql_pass = self._config.mysql_pass
+		self._mysql_db = self._config.database
+		self._table_prefix = self._config.table_prefix
 
 	def get_connection(self):
 		if not self._connection:

@@ -29,10 +29,9 @@ class JoomlaLoginModule(Component):
 			acl = JoomlaACL(self.config)
 			if acl.login_allowed(id=session.get_uid()):
 				session.update_timestamp()
-			else:
-				return None
-		
-		return session._username
+				return session.get_username()
+
+		return None
 
 
 	# INavigationContributor methods
@@ -44,11 +43,11 @@ class JoomlaLoginModule(Component):
 		if req.authname and req.authname != 'anonymous':
 			yield ('metanav', 'login', 'logged in as %s' % req.authname)
 
-			logout_url = self.config.get('logout_url')
+			logout_url = self.config.logout_url
 			if logout_url:
 				yield ('metanav', 'logout', tag.a('Logout', href=logout_url))
 		else:
-			login_url = self.config.get('login_url')
+			login_url = self.config.login_url
 			if login_url:
 				yield ('metanav', 'login', tag.a('Login', href=login_url))
 	
@@ -59,14 +58,14 @@ class JoomlaLoginModule(Component):
 
 	def process_request(self, req):
 		if req.path_info.startswith('/login'):
-			if self.config.get('login_url'):
-				req.redirect(self.config.get('login_url'))
+			if self.config.login_url:
+				req.redirect(self.config.login_url)
 			else:
 				raise TracError(tag("You can only login on the Joomla installation."))
 
 		if req.path_info.startswith('/logout'):
-			if self.config.get('logout_url'):
-				req.redirect(self.config.get('logout_url'))
+			if self.config.logout_url:
+				req.redirect(self.config.logout_url)
 			else:
 				raise TracError(tag("You can only logout on the Joomla installation."))
 

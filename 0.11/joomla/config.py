@@ -17,31 +17,6 @@ class JoomlaConfig(Component):
 	authz_file = Option('joomla', 'authz_file', None, 'Location of authz policy configuration file.')
 	login_url = Option('joomla', 'login_url', None, 'Location that users are redirected if they press on the login button. If not set, no login link will appear.')
 	logout_url = Option('joomla', 'logout_url', None, 'Location that users are redirected if they press on the logout button. If not set, no logout link will appear.')
+	allow_anonymous = BoolOption('joomla', 'allow_anonymous', default=True, doc='If set to False, then users that are not authenticated in Trac will be redirected to the login_url.')
 
 	implements(IJoomlaConfig)
-	
-	def get(self, option):
-		if option == "session_lifetime":
-			return self.session_lifetime
-		elif option == "hash_secret":
-			return self.hash_secret
-		elif option == "live_site":
-			return self.live_site
-		elif option == "mysql_user":
-			return self.mysql_user
-		elif option == "mysql_pass":
-			return self.mysql_pass
-		elif option == "database":
-			return self.database
-		elif option == "table_prefix":
-			return self.table_prefix
-		elif option == "aro_groups":
-			return self.aro_groups
-		elif option == "authz_file":
-			return self.authz_file
-		elif option == "login_url":
-			return self.login_url
-		elif option == "logout_url":
-			return self.logout_url
-
-		return None

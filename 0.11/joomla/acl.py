@@ -3,7 +3,7 @@ import database
 class JoomlaACL:
 	def __init__(self, config):
 		self._config = config
-		self._min_aro_groups = self._config.get("aro_groups")
+		self._min_aro_groups = self._config.aro_groups
 
 	def login_allowed(self, id=None, name=None):
 		gid = self.get_user_gid(id=id, name=name)

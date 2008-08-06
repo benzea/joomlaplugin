@@ -18,9 +18,9 @@ class JoomlaSession:
 		self._config = config
 		self._req = req
 
-		self._session_lifetime = self._config.get("session_lifetime")
-		self._hash_secret = self._config.get("hash_secret")
-		self._live_site = self._config.get("live_site")
+		self._session_lifetime = self._config.session_lifetime
+		self._hash_secret = self._config.hash_secret
+		self._live_site = self._config.live_site
 
 		self._load()
 	
@@ -62,7 +62,8 @@ class JoomlaSession:
 
 		sql = "UPDATE %s SET time=UNIX_TIMESTAMP() WHERE session_id=%%s" % (table)
 		cursor.execute(sql, (session_id))
-		# Should the cursor be committed?
+		# MySQL doesn't know about committing?
+
 
 	def get_username(self):
 		return self._username
