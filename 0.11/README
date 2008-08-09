@@ -1,3 +1,16 @@
+= Joomla! 1.0 Integration for Trac =
+
+== About ==
+
+This plugin allows you to have a signle login based on Joomla. It is also
+possible to use Joomla groups for rights management.
+
+== Installation ==
+
 Plugin to integrate trac with joomla.
 
 Create the .egg file for trac by running ./setup.py bdist_egg.
+
+== Configuration ==
+
+Please look at joomla/config.py for a list of options.
