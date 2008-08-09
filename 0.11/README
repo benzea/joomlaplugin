@@ -14,3 +14,35 @@ Create the .egg file for trac by running ./setup.py bdist_egg.
 == Configuration ==
 
 Please look at joomla/config.py for a list of options.
+
+An example is following. Most of the options can be copied straigt from the
+joomla configuration. This is a list of changes I made in my own copy. There
+may be some things missing here.
+
+[components]
+# This disables the normal authentication plugin
+trac.web.auth.* = disabled
+# This gets rid of the PermissionAdmin panel, because this configuration
+# only authenticates using the Joomla authz plugin.
+trac.admin.web_ui.PermissionAdminPanel = disabled
+# Enable the joomla plugin
+joomla.* = enabled
+
+
+[trac]
+permission_policies = JoomlaAuthzPolicy
+
+[joomla]
+session_lifetime=2700
+hash_secret = SECR3T
+mysql_user = USERNAME
+mysql_pass = PASSWORD
+database = joomla_10_production
+# Can be used to override the site URL used in the cookie hash
+#live_site = joomla.localhost
+table_prefix = jos_
+aro_groups = A Joomla Groupname, Administrator
+authz_file = /path/to/trac/instance/joomla_authz
+# The login_url/logout_url is used to create Login and Logout links if present
+login_url = http://joomla.localhost/
+logout_url = http://joomla.localhost/index.php?option=logout&Itemid=546
