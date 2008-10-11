@@ -62,7 +62,7 @@ class JoomlaSession:
 
 		sql = "UPDATE %s SET time=UNIX_TIMESTAMP() WHERE session_id=%%s" % (table)
 		cursor.execute(sql, (session_id))
-		db.commit()
+		# MySQL doesn't know about committing?
 
 
 	def get_username(self):
