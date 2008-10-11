@@ -45,11 +45,11 @@ class JoomlaLoginModule(Component):
 
 			logout_url = self.config.logout_url
 			if logout_url:
-				yield ('metanav', 'logout', tag.a('Logout', href=logout_url))
+				yield ('metanav', 'logout', tag.a('Logout', href=logout_url, target="_top"))
 		else:
 			login_url = self.config.login_url
 			if login_url:
-				yield ('metanav', 'login', tag.a('Login', href=login_url))
+				yield ('metanav', 'login', tag.a('Login', href=login_url, target="_top"))
 	
 
 	# IRequestHandler, this is just in case anything forwards to /login or /logout
