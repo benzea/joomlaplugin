@@ -134,7 +134,6 @@ from trac.util.compat import set, groupby
 from trac.perm import PermissionSystem, IPermissionPolicy
 from configobj import ConfigObj
 
-from joomla.config import IJoomlaConfig
 from joomla.acl import JoomlaACL
 
 
@@ -142,20 +141,14 @@ class JoomlaAuthzPolicy(Component):
 
 	implements(IPermissionPolicy)
 
-	configs = ExtensionPoint(IJoomlaConfig)
-
+	authz_file = Option('joomla', 'authz_file', None, 'Location of authz policy configuration file.')
 
 	authz = None
 	authz_mtime = None
 
 	# IPermissionPolicy methods
-	
-	def __init__(self):
-		self.config = self.configs[0]
-		self.acl = JoomlaACL(self.config)
-		self.authz_file = self.config.authz_file
-	
 	def check_permission(self, action, username, resource, perm):
+		print "checking permissions for user ", username
 		if self.authz_file and not self.authz_mtime or \
 				os.path.getmtime(self.get_authz_file()) > self.authz_mtime:
 			self.parse_authz()
@@ -199,7 +192,7 @@ class JoomlaAuthzPolicy(Component):
 
 	def get_user_groups(self, username):
 		groups = self.groups_by_user.get(username, set())
-		for group in self.acl.get_user_groups(name=username).values():
+		for group in JoomlaACL(self.env).get_user_groups(name=username).values():
 			groups.add('@' + group)
 		return groups
 

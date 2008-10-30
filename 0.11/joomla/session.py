@@ -1,110 +1,104 @@
-
-import database
+from trac.core import Component
+from trac.config import Option, IntOption
+from joomla.database import JoomlaDatabaseManager
 import md5
 import Cookie
 
+class User(object):
+	username = None
+	guest = True
+	uid = 0
+	gid = 0
+	usertype = None
+	session_id = None
 
-class JoomlaSession:
-	#implements(IJoomlaSession)
-	
-	def __init__(self, config, req):
-		self._username = None
-		self._guest = True
-		self._uid = 0
-		self._gid = 0
-		self._usertype = None
-		self._session_id = None
 
-		self._config = config
-		self._req = req
+class JoomlaSession(Component):
+	session_lifetime = IntOption("joomla", "session_lifetime", default=2700, doc="The time until the session expires (in seconds).")
+	hash_secret = Option("joomla", "hash_secret", default="", doc="The Secret that Joomla uses to salt its hashes.")
+	live_site = Option("joomla", "live_site", default=None, doc="The Site to use for the cookie hash (defaults to the current hostname).")
 
-		self._session_lifetime = self._config.session_lifetime
-		self._hash_secret = self._config.hash_secret
-		self._live_site = self._config.live_site
-
-		self._load()
-	
-	def _load(self):
-		db = database.get_instance(self._config)
-		cursor = db.cursor()
+	def get_user(self, req):
+		db = JoomlaDatabaseManager(self.env)
+		cnx = db.get_connection()
+		cursor = cnx.cursor()
 		
-		table = db.table_name("session")
+		table = db.get_table_name("session")
 
-		session_id = self._get_session_id()
+		session_id = self._get_session_id(req)
 		if not session_id:
-			return
+			return None
 
 		sql = "SELECT username, guest, userid, usertype, gid FROM %s WHERE session_id=%%s AND time >= (UNIX_TIMESTAMP()-%i);" \
-		       % (table, self._session_lifetime)
+		       % (table, self.session_lifetime)
 		cursor.execute(sql, (session_id))
 		if cursor.rowcount > 1:
+			cnx.close()
 			raise AssertionError
 
 		if cursor.rowcount == 0:
-			return
+			cnx.close()
+			return None
+
+		user = User()
 
 		row = cursor.fetchone()
-		self._username = row[0]
-		self._guest = row[1]
-		self._uid = row[2]
-		self._usertype = row[3]
-		self._gid = row[4]
+		user.username = row[0]
+		user.guest = row[1]
+		user.uid = row[2]
+		user.usertype = row[3]
+		user.gid = row[4]
 
-	def update_timestamp(self):
-		db = database.get_instance(self._config)
-		cursor = db.cursor()
+		cnx.close()
 		
-		table = db.table_name("session")
+		return user
 
-		session_id = self._get_session_id()
-		if not session_id:
+	def update_timestamp(self, user):
+		if user is None:
 			return
 
+		db = JoomlaDatabaseManager(self.env)
+		cnx = db.get_connection()
+		cursor = cnx.cursor()
+		
+		table = db.get_table_name("session")
+
 		sql = "UPDATE %s SET time=UNIX_TIMESTAMP() WHERE session_id=%%s" % (table)
-		cursor.execute(sql, (session_id))
-		# MySQL doesn't know about committing?
+		cursor.execute(sql, (user.session_id,))
+		cnx.commit()
+		cnx.close()
 
 
-	def get_username(self):
-		return self._username
-
-	def get_uid(self):
-		return self._uid
-
-	def _get_session_id(self):
-		if self._session_id:
-			return self._session_id
-
-		cookie = self._get_cookie_value()
+	def _get_session_id(self, req):
+		cookie = self._get_cookie_value(req)
 		if not cookie:
 			return None
 
 		hash = md5.md5()
 		hash.update(cookie)
-		hash.update(self._req.environ["REMOTE_ADDR"])
-		hash.update(self._req.environ["HTTP_USER_AGENT"])
+		hash.update(req.environ["REMOTE_ADDR"])
+		hash.update(req.environ["HTTP_USER_AGENT"])
 
 		session_hash = md5.md5()
-		session_hash.update(self._hash_secret)
+		session_hash.update(self.hash_secret)
 		session_hash.update(hash.hexdigest())
 
-		self._session_id = session_hash.hexdigest()
-		return self._session_id
+		return session_hash.hexdigest()
 
-	def _get_cookie_name(self):
-		if not self._live_site:
-			server_name = self._req.environ["HTTP_HOST"]
+	def _get_cookie_name(self, req):
+		if not self.live_site:
+			server_name = req.environ["HTTP_HOST"]
 		else:
-			server_name = self._live_site
+			server_name = self.live_site
 
 		hash = md5.md5("site" + server_name)
 		return hash.hexdigest()
 
-	def _get_cookie_value(self):
-		cookie_name = self._get_cookie_name()
+	def _get_cookie_value(self, req):
+		cookie_name = self._get_cookie_name(req)
 
-		if self._req.incookie.has_key(cookie_name):
-			return self._req.incookie[cookie_name].value
+		if req.incookie.has_key(cookie_name):
+			return req.incookie[cookie_name].value
 		else:
 			return None
 
