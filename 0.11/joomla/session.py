@@ -48,6 +48,7 @@ class JoomlaSession(Component):
 		user.uid = row[2]
 		user.usertype = row[3]
 		user.gid = row[4]
+		user.session_id = session_id
 
 		cnx.close()
 		
