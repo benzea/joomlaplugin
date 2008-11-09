@@ -29,7 +29,7 @@ class JoomlaSession(Component):
 		if not session_id:
 			return None
 
-		sql = "SELECT username, guest, userid, usertype, gid FROM %s WHERE session_id=%%s AND time >= (UNIX_TIMESTAMP()-%i);" \
+		sql = "SELECT username, guest, userid, usertype, gid FROM %s WHERE session_id=%%s AND guest=0 AND time >= (UNIX_TIMESTAMP()-%i);" \
 		       % (table, self.session_lifetime)
 		cursor.execute(sql, (session_id))
 		if cursor.rowcount > 1:
