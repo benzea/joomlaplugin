@@ -69,6 +69,47 @@ class JoomlaSession(Component):
 		cnx.commit()
 		cnx.close()
 
+	def update_userdata_from_joomla(self, user):
+		if user is None:
+			return
+
+		# Get email and name from the Joomla! database
+		db = JoomlaDatabaseManager(self.env)
+		cnx = db.get_connection()
+		cursor = cnx.cursor()
+		
+		table = db.get_table_name("users")
+
+		sql = "SELECT name,email FROM %s WHERE id=%%s" % (table)
+		cursor.execute(sql, (user.uid,))
+
+		if cursor.rowcount > 1:
+			cnx.close()
+			raise AssertionError
+
+		if cursor.rowcount == 0:
+			cnx.close()
+			return None
+
+		cnx.close()
+
+		row = cursor.fetchone()
+		data = {
+			'name'  : row[0],
+			'email' : row[1]
+		}
+
+		db = self.env.get_db_cnx()
+		cursor = db.cursor()
+
+		cursor.execute("DELETE FROM session_attribute WHERE sid=%s", (user.username, ))
+
+		attrs = [(user.username, 1, k, v) for k, v in data.iteritems()]
+		cursor.executemany("INSERT INTO session_attribute "
+                                   "(sid,authenticated,name,value) "
+                                   "VALUES(%s,%s,%s,%s)", attrs)
+		
+		db.commit()
 
 	def _get_session_id(self, req):
 		cookie = self._get_cookie_value(req)

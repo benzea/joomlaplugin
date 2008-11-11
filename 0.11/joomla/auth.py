@@ -30,6 +30,7 @@ class JoomlaLoginModule(Component):
 			acl = JoomlaACL(self.env)
 			if acl.login_allowed(id=user.uid):
 				session.update_timestamp(user)
+				session.update_userdata_from_joomla(user)
 				return user.username
 
 		return None
