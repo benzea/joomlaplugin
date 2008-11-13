@@ -148,7 +148,6 @@ class JoomlaAuthzPolicy(Component):
 
 	# IPermissionPolicy methods
 	def check_permission(self, action, username, resource, perm):
-		print "checking permissions for user ", username
 		if self.authz_file and not self.authz_mtime or \
 				os.path.getmtime(self.get_authz_file()) > self.authz_mtime:
 			self.parse_authz()

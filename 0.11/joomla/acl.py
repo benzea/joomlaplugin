@@ -107,9 +107,7 @@ class JoomlaACL(Component):
 	def get_user_groups(self, id=None, name=None):
 		gid = self.get_user_gid(id=id, name=name)
 		if not gid:
-			print "Could not get users GID"
 			return {}
 
-		print self.get_parent_groups(id=gid)
 		return self.get_parent_groups(id=gid)
 
