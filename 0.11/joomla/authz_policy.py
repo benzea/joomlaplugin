@@ -211,9 +211,9 @@ class JoomlaAuthzPolicy(Component):
 				parent = flatten(parent)
 			else:
 				parent = []
-			return parent + ['%s:%s@%s' % (resource.realm or '*',
-										   resource.id or '*',
-										   resource.version or '*')]
+			return parent + ['%s:%s@%s' % (resource.realm or '',
+										   resource.id or '',
+										   resource.version or '')]
 		return '/'.join(flatten(resource))
 
 	def authz_permissions(self, resource_key, username):
