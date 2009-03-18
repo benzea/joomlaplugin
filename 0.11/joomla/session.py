@@ -102,7 +102,8 @@ class JoomlaSession(Component):
 		db = self.env.get_db_cnx()
 		cursor = db.cursor()
 
-		cursor.execute("DELETE FROM session_attribute WHERE sid=%s", (user.username, ))
+		attrs = [(user.username, name) for name in ['email', 'name']]
+		cursor.executemany("DELETE FROM session_attribute WHERE sid=%s AND name=%s", attrs)
 
 		attrs = [(user.username, 1, k, v) for k, v in data.iteritems()]
 		cursor.executemany("INSERT INTO session_attribute "
