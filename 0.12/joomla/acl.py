@@ -3,7 +3,7 @@ from trac.config import ListOption
 from joomla.database import JoomlaDatabaseManager
 
 class JoomlaACL(Component):
-	aro_groups = ListOption("joomla", "aro_groups", default=['ROOT'], doc="The minimum ARO Joomla Group that a user needs to have (will be downgraded to anonymous otherwise). This can be a list of allowed groups.")
+	login_groups = ListOption("joomla", "groups", default=['ROOT'], doc="The minimum Joomla group that a user needs to have (will be downgraded to anonymous otherwise). This can be a list of allowed groups.")
 
 	def login_allowed(self, id=None, name=None):
 		gid = self.get_user_gid(id=id, name=name)
@@ -13,7 +13,7 @@ class JoomlaACL(Component):
 
 		groups = self.get_parent_groups(id=gid)
 		groups = groups.values()
-		for group in self.aro_groups:
+		for group in self.login_groups:
 			if group in groups:
 				return True
 		return False
@@ -51,17 +51,17 @@ class JoomlaACL(Component):
 		db = JoomlaDatabaseManager(self.env)
 		cnx = db.get_connection()
 		cursor = cnx.cursor()
-		
-		table = db.get_table_name("core_acl_aro_groups")
+
+		table = db.get_table_name("usergroups")
 		sql = """
-		      SELECT child.group_id, child.name FROM %(table)s
+		      SELECT child.id, child.title FROM %(table)s
 		      parent LEFT JOIN %(table)s child ON parent.lft >= child.lft AND parent.rgt <= child.rgt
 		      """ % { 'table': table}
 		if id:
-			sql += "WHERE parent.group_id = %s"
+			sql += "WHERE parent.id = %s"
 			param = str(id)
 		elif name:
-			sql += "WHERE parent.name = %s"
+			sql += "WHERE parent.title = %s"
 			param = name
 		else:
 			cnx.close()
@@ -77,17 +77,19 @@ class JoomlaACL(Component):
 
 		return result
 
-	def get_user_gid(self, id=None, name=None):
+	def get_user_group(self, id=None, name=None):
+		"""Why do people put strings into the columns? I just don't understand
+		things like that ..."""
 		db = JoomlaDatabaseManager(self.env)
 		cnx = db.get_connection()
 		cursor = cnx.cursor()
 		
 		user_table = db.get_table_name("users")
 		if id:
-			sql = "SELECT gid FROM %s WHERE id=%%s" % user_table
+			sql = "SELECT %(usergroups).id, %(users)s.usertype FROM %(users)s LEFT JOIN %(usergroups) ON %(users).usertype=$(usergroups).title WHERE $(users).id=%%s" % user_table
 			param = id
 		elif name:
-			sql = "SELECT gid FROM %s WHERE username=%%s" % user_table
+			sql = "SELECT %(usergroups).id, %(users)s.usertype FROM %(users)s LEFT JOIN %(usergroups) ON %(users).usertype=$(usergroups).title WHERE $(users).name=%%s" % user_table
 			param = name
 		else:
 			raise AssertionError
@@ -98,11 +100,25 @@ class JoomlaACL(Component):
 			cnx.close()
 			return None
 
-		gid = cursor.fetchone()[0]
+		gid, groupname = cursor.fetchone()
 
 		cnx.close()
 
-		return gid
+		return gid, groupname
+
+	def get_user_gid(self, id=None, name=None):
+		res = get_user_group(id, name)
+		if res != None:
+			return res[0]
+		else:
+			return None
+
+	def get_user_group_name(self, id=None, name=None):
+		res = get_user_group(id, name)
+		if res != None:
+			return res[1]
+		else:
+			return None
 
 	def get_user_groups(self, id=None, name=None):
 		gid = self.get_user_gid(id=id, name=name)

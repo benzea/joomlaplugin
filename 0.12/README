@@ -33,7 +33,7 @@ joomla.* = enabled
 permission_policies = JoomlaAuthzPolicy
 
 [joomla]
-session_lifetime=2700
+session_lifetime=15
 hash_secret = SECR3T
 mysql_user = USERNAME
 mysql_pass = PASSWORD
@@ -41,7 +41,7 @@ database = joomla_10_production
 # Can be used to override the site URL used in the cookie hash
 #live_site = joomla.localhost
 table_prefix = jos_
-aro_groups = A Joomla Groupname, Administrator
+groups = A Joomla Groupname, Administrator
 authz_file = /path/to/trac/instance/joomla_authz
 # The login_url/logout_url is used to create Login and Logout links if present
 login_url = http://joomla.localhost/

@@ -13,17 +13,21 @@ class User(object):
 
 
 class JoomlaSession(Component):
-	session_lifetime = IntOption("joomla", "session_lifetime", default=2700, doc="The time until the session expires (in seconds).")
+	session_lifetime = IntOption("joomla", "session_lifetime", default=15, doc="The time until the session expires (in minutes).")
 	hash_secret = Option("joomla", "hash_secret", default="", doc="The Secret that Joomla uses to salt its hashes.")
 	live_site = Option("joomla", "live_site", default=None, doc="The Site to use for the cookie hash (defaults to the current hostname).")
+	session_name = Option("joomla", "session_name", default="site", doc="The session name to use (defaults to \"site\").")
+	cookie_hash = Option("joomla", "cookie_hash", default=None, doc="Cookie hash override for the lazy, just copy the real value from the site (default: calculate using \"session_name\").")
 
 	def get_user(self, req):
-	        user = self._get_user_from_session(req)
-	        if user is not None:
-	                return user
+		user = self._get_user_from_session(req)
+		if user is not None:
+			return user
 
-                # Try to create a joomla session from a "Remember Me" cookie
-                return self._create_session_from_remember_me(req)
+		return None
+
+		# Try to create a joomla session from a "Remember Me" cookie
+		#return self._create_session_from_remember_me(req)
 
 	def update_timestamp(self, user):
 		if user is None:
@@ -85,27 +89,25 @@ class JoomlaSession(Component):
 
 	def _get_session_id(self, req):
 		cookie = self._get_cookie_value(req)
-		if not cookie:
-			return None
 
-		hash = md5.md5()
-		hash.update(cookie)
-		hash.update(req.environ["REMOTE_ADDR"])
-		hash.update(req.environ["HTTP_USER_AGENT"])
-
-		session_hash = md5.md5()
-		session_hash.update(self.hash_secret)
-		session_hash.update(hash.hexdigest())
-
-		return session_hash.hexdigest()
+		return cookie
 
 	def _get_cookie_name(self, req):
+		if self.cookie_hash is not None:
+			return self.cookie_hash
+
 		if not self.live_site:
 			server_name = req.environ["HTTP_HOST"]
 		else:
 			server_name = self.live_site
 
-		hash = md5.md5("site" + server_name)
+		session_name = self.session_name
+		name = md5.md5(self.hash_secret + session_name)
+		name = name.hexdigest()
+
+		# And hash again ...
+		hash = md5.md5(name)
+
 		return hash.hexdigest()
 
 	def _get_cookie_value(self, req):
@@ -128,7 +130,7 @@ class JoomlaSession(Component):
 			return None
 
 		sql = "SELECT username, guest, userid, usertype FROM %s WHERE session_id=%%s AND guest=0 AND time >= (UNIX_TIMESTAMP()-%i);" \
-		       % (table, self.session_lifetime)
+		       % (table, self.session_lifetime * 60)
 		cursor.execute(sql, (session_id))
 		if cursor.rowcount > 1:
 			cnx.close()
@@ -151,94 +153,95 @@ class JoomlaSession(Component):
 		
 		return user
 
-	def _get_remember_me_cookie_name(self, req):
-		if not self.live_site:
-			server_name = req.environ["HTTP_HOST"]
-		else:
-			server_name = self.live_site
+#	def _get_remember_me_cookie_name(self, req):
+#		if not self.live_site:
+#			server_name = req.environ["HTTP_HOST"]
+#		else:
+#			server_name = self.live_site
 
-		hash = md5.md5()
-		hash.update("remembermecookieusername")
-		hash.update(self._get_cookie_name(req))
+#		hash = md5.md5()
+#		hash.update("remembermecookieusername")
+#		hash.update(self._get_cookie_name(req))
 
-		name_hash = md5.md5()
-		name_hash.update(self.hash_secret)
-		name_hash.update(hash.hexdigest())
+#		name_hash = md5.md5()
+#		name_hash.update(self.hash_secret)
+#		name_hash.update(hash.hexdigest())
 
-		return name_hash.hexdigest()
+#		return name_hash.hexdigest()
 
-	def _get_remember_me_cookie_value(self, req):
-		cookie_name = self._get_remember_me_cookie_name(req)
+#	def _get_remember_me_cookie_value(self, req):
+#		cookie_name = self._get_remember_me_cookie_name(req)
 
-		if req.incookie.has_key(cookie_name):
-			return req.incookie[cookie_name].value
-		else:
-			return None
+#		if req.incookie.has_key(cookie_name):
+#			return req.incookie[cookie_name].value
+#		else:
+#			return None
 
-        def _create_session_from_remember_me(self, req):
-		db = JoomlaDatabaseManager(self.env)
-		cnx = db.get_connection()
-		cursor = cnx.cursor()
+#	def _create_session_from_remember_me(self, req):
+#		db = JoomlaDatabaseManager(self.env)
+#		cnx = db.get_connection()
+#		cursor = cnx.cursor()
 
-		cookie = self._get_remember_me_cookie_value(req)
-		if cookie is None:
-			return None
+#		cookie = self._get_remember_me_cookie_value(req)
+#		if cookie is None:
+#			return None
 
-		# Cookie is too short
-		if len(cookie) < 65:
-			return None
+#		# Cookie is too short
+#		if len(cookie) < 65:
+#			return None
 
-		cookie_userhash = cookie[0:32]
-		cookie_passhash = cookie[32:64]
-		cookie_uid = cookie[64:]
+#		cookie_userhash = cookie[0:32]
+#		cookie_passhash = cookie[32:64]
+#		cookie_uid = cookie[64:]
 
 
-		table = db.get_table_name("users")
+#		table = db.get_table_name("users")
 
-		sql = "SELECT id, username, password, usertype FROM %s WHERE id=%%s AND block=0;" \
-		       % (table,)
-		cursor.execute(sql, (cookie_uid,))
+#		sql = "SELECT id, username, password, usertype FROM %s WHERE id=%%s AND block=0;" \
+#		       % (table,)
+#		cursor.execute(sql, (cookie_uid,))
 
-		if cursor.rowcount > 1:
-			cnx.close()
-			raise AssertionError
+#		if cursor.rowcount > 1:
+#			cnx.close()
+#			raise AssertionError
 
-		if cursor.rowcount == 0:
-			cnx.close()
-			return None
+#		if cursor.rowcount == 0:
+#			cnx.close()
+#			return None
 
-		user = User()
+#		user = User()
 
-		row = cursor.fetchone()
-		user.guest = 0
-		user.uid = row[0]
-		user.username = row[1]
-		passwd = row[2]
-		user.usertype = row[3]
+#		row = cursor.fetchone()
+#		user.guest = 0
+#		user.uid = row[0]
+#		user.username = row[1]
+#		passwd = row[2]
+#		user.usertype = row[3]
 
-		cnx.close()
+#		cnx.close()
 
-		hash = md5.md5()
-		hash.update(req.environ["HTTP_USER_AGENT"])
+#		hash = md5.md5()
+#		hash.update(req.environ["HTTP_USER_AGENT"])
 
-		salt = md5.md5()
-		salt.update(self.hash_secret)
-		salt.update(hash.hexdigest())
-		salt = salt.hexdigest()
+#		salt = md5.md5()
+#		salt.update(self.hash_secret)
+#		salt.update(hash.hexdigest())
+#		salt = salt.hexdigest()
 
-		userhash = md5.md5()
-		userhash.update(user.username)
-		userhash.update(salt)
-		userhash = userhash.hexdigest()
+#		userhash = md5.md5()
+#		userhash.update(user.username)
+#		userhash.update(salt)
+#		userhash = userhash.hexdigest()
 
-		passwd = passwd.split(':')[0]
-		passhash = md5.md5()
-		passhash.update(passwd)
-		passhash.update(salt)
-		passhash = passhash.hexdigest()
+#		passwd = passwd.split(':')[0]
+#		passhash = md5.md5()
+#		passhash.update(passwd)
+#		passhash.update(salt)
+#		passhash = passhash.hexdigest()
 
-		# XXX: Just check that everything is valid, do NOT create a Joomla session!
-		if userhash == cookie_userhash and passhash == cookie_passhash:
-			return user
-		else:
-			return None
+#		# XXX: Just check that everything is valid, do NOT create a Joomla session!
+#		if userhash == cookie_userhash and passhash == cookie_passhash:
+#			return user
+#		else:
+#			return None
+
