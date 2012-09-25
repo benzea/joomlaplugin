@@ -84,12 +84,14 @@ class JoomlaACL(Component):
 		cnx = db.get_connection()
 		cursor = cnx.cursor()
 		
-		user_table = db.get_table_name("users")
+		tables = dict()
+		tables['users'] = db.get_table_name("users")
+		tables['usergroups'] = db.get_table_name("usergroups")
 		if id:
-			sql = "SELECT %(usergroups).id, %(users)s.usertype FROM %(users)s LEFT JOIN %(usergroups) ON %(users).usertype=$(usergroups).title WHERE $(users).id=%%s" % user_table
+			sql = "SELECT %(usergroups)s.id, %(users)s.usertype FROM %(users)s LEFT JOIN %(usergroups)s ON %(users)s.usertype=%(usergroups)s.title WHERE %(users)s.id=%%s" % tables
 			param = id
 		elif name:
-			sql = "SELECT %(usergroups).id, %(users)s.usertype FROM %(users)s LEFT JOIN %(usergroups) ON %(users).usertype=$(usergroups).title WHERE $(users).name=%%s" % user_table
+			sql = "SELECT %(usergroups)s.id, %(users)s.usertype FROM %(users)s LEFT JOIN %(usergroups)s ON %(users)s.usertype=%(usergroups)s.title WHERE %(users)s.username=%%s" % tables
 			param = name
 		else:
 			raise AssertionError
@@ -107,14 +109,14 @@ class JoomlaACL(Component):
 		return gid, groupname
 
 	def get_user_gid(self, id=None, name=None):
-		res = get_user_group(id, name)
+		res = self.get_user_group(id, name)
 		if res != None:
 			return res[0]
 		else:
 			return None
 
 	def get_user_group_name(self, id=None, name=None):
-		res = get_user_group(id, name)
+		res = self.get_user_group(id, name)
 		if res != None:
 			return res[1]
 		else:
