@@ -19,6 +19,10 @@ An example is following. Most of the options can be copied straigt from the
 joomla configuration. This is a list of changes I made in my own copy. There
 may be some things missing here.
 
+Please refere to authz.py for the configuration of the authz module. There
+is nothing special about this module really. Joomla groups can be accessed
+with "@Groupname".
+
 [components]
 # This disables the normal authentication plugin
 trac.web.auth.* = disabled
@@ -64,3 +68,4 @@ session_name = site
 # Cookie hash override for the lazy, just copy the real value from the site
 # (default: calculate using "session_name" and "hash_secret").
 cookie_hash = HASH
+
