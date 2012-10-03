@@ -15,7 +15,7 @@ class User(object):
 class JoomlaSession(Component):
 	session_lifetime = IntOption("joomla", "session_lifetime", default=15, doc="The time until the session expires (in minutes).")
 	hash_secret = Option("joomla", "hash_secret", default="", doc="The Secret that Joomla uses to salt its hashes.")
-	live_site = Option("joomla", "live_site", default=None, doc="The Site to use for the cookie hash (defaults to the current hostname).")
+	#live_site = Option("joomla", "live_site", default=None, doc="The Site to use for the cookie hash (defaults to the current hostname).")
 	session_name = Option("joomla", "session_name", default="site", doc="The session name to use (defaults to \"site\").")
 	cookie_hash = Option("joomla", "cookie_hash", default=None, doc="Cookie hash override for the lazy, just copy the real value from the site (default: calculate using \"session_name\").")
 
@@ -96,10 +96,10 @@ class JoomlaSession(Component):
 		if self.cookie_hash is not None:
 			return self.cookie_hash
 
-		if not self.live_site:
-			server_name = req.environ["HTTP_HOST"]
-		else:
-			server_name = self.live_site
+		#if not self.live_site:
+		#	server_name = req.environ["HTTP_HOST"]
+		#else:
+		#	server_name = self.live_site
 
 		session_name = self.session_name
 		name = md5.md5(self.hash_secret + session_name)

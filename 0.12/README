@@ -33,16 +33,34 @@ joomla.* = enabled
 permission_policies = JoomlaAuthzPolicy
 
 [joomla]
-session_lifetime=15
-hash_secret = SECR3T
-mysql_user = USERNAME
-mysql_pass = PASSWORD
-database = joomla_10_production
-# Can be used to override the site URL used in the cookie hash
-#live_site = joomla.localhost
+# Location that users are redirected if they press on the login button. If
+# not set, no login link will appear.
+login_url = URL
+
+# Location that users are redirected if they press on the logout button. If
+# not set, no logout link will appear.
+logout_url = URL
+
+# Location of authz policy configuration file.
+authz_file = /path/to/joomla_authz
+
+
+# The Joomla Database that stores the session and user information.
+database = mysql://USERNAME:PASSWORD@localhost/DATABASE
+
+# The table prefix to use.
 table_prefix = jos_
-groups = A Joomla Groupname, Administrator
-authz_file = /path/to/trac/instance/joomla_authz
-# The login_url/logout_url is used to create Login and Logout links if present
-login_url = http://joomla.localhost/
-logout_url = http://joomla.localhost/index.php?option=logout&Itemid=546
+
+# The time until the session expires (in minutes).
+session_lifetime=15
+
+# The Secret that Joomla uses to salt its hashes.
+hash_secret = SECR3T
+
+# The session name to use (defaults to "site"); you should not need to
+# change this
+session_name = site
+
+# Cookie hash override for the lazy, just copy the real value from the site
+# (default: calculate using "session_name" and "hash_secret").
+cookie_hash = HASH

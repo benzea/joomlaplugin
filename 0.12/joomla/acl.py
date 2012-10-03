@@ -3,7 +3,7 @@ from trac.config import ListOption
 from joomla.database import JoomlaDatabaseManager
 
 class JoomlaACL(Component):
-	login_groups = ListOption("joomla", "groups", default=['ROOT'], doc="The minimum Joomla group that a user needs to have (will be downgraded to anonymous otherwise). This can be a list of allowed groups.")
+	login_groups = ListOption("joomla", "groups", default=['Registered'], doc="The minimum Joomla group that a user needs to have (will be downgraded to anonymous otherwise). This can be a list of allowed groups.")
 
 	def login_allowed(self, id=None, name=None):
 		groups = self.get_user_groups(id=id, name=name)
