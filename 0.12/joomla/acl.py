@@ -40,10 +40,6 @@ class JoomlaACL(Component):
 
 		cursor.execute(sql, param)
 
-		if cursor.rowcount == 0:
-			cnx.close()
-			return None
-
 		groups = set()
 		for gid, groupname in cursor:
 			groups.add(groupname)
