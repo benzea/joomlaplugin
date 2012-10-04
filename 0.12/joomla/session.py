@@ -3,6 +3,8 @@ from trac.config import Option, IntOption
 from joomla.database import JoomlaDatabaseManager
 import md5
 import Cookie
+import phpserialize
+import time
 
 class User(object):
 	username = None
@@ -35,11 +37,18 @@ class JoomlaSession(Component):
 		db = JoomlaDatabaseManager(self.env)
 		cnx = db.get_connection()
 		cursor = cnx.cursor()
-		
+
 		table = db.get_table_name("session")
 
-		sql = "UPDATE %s SET time=UNIX_TIMESTAMP() WHERE session_id=%%s" % (table)
-		cursor.execute(sql, (user.session_id,))
+		# TODO: Something fishy is going on here, it seems that "last" is always
+		# the same as "now". I am guessing this function gets called twice for
+		# some reason.
+		current_time = int(time.time())
+		user.session_data['session.timer.last'] = int(user.session_data['session.timer.now'])
+		user.session_data['session.timer.now'] = current_time
+
+		sql = "UPDATE %s SET time=%%s,data=%%s WHERE session_id=%%s" % (table)
+		cursor.execute(sql, (current_time, self.encode_session_data(user.session_data), user.session_id))
 		cnx.commit()
 		cnx.close()
 
@@ -128,7 +137,7 @@ class JoomlaSession(Component):
 		if not session_id:
 			return None
 
-		sql = "SELECT username, guest, userid FROM %s WHERE session_id=%%s AND guest=0 AND time >= (UNIX_TIMESTAMP()-%i);" \
+		sql = "SELECT username, guest, userid, data FROM %s WHERE session_id=%%s AND guest=0 AND time >= (UNIX_TIMESTAMP()-%i);" \
 		       % (table, self.session_lifetime * 60)
 		cursor.execute(sql, (session_id))
 		if cursor.rowcount > 1:
@@ -145,11 +154,23 @@ class JoomlaSession(Component):
 		user.username = row[0]
 		user.guest = row[1]
 		user.uid = row[2]
+		user.session_data = self.decode_session_data(row[3])
 		user.session_id = session_id
 
 		cnx.close()
 		
 		return user
+
+	def decode_session_data(self, raw_data):
+		data = raw_data.split('|')
+		assert len(data) == 2 # No idea how to handle anything else
+
+		data = data[1]
+
+		return phpserialize.loads(data, object_hook=phpserialize.phpobject)
+
+	def encode_session_data(self, data):
+		return '__default|' + phpserialize.dumps(data)
 
 #	def _get_remember_me_cookie_name(self, req):
 #		if not self.live_site:
