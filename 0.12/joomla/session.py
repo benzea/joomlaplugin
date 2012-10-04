@@ -162,12 +162,12 @@ class JoomlaSession(Component):
 		return user
 
 	def decode_session_data(self, raw_data):
-		data = raw_data.split('|')
+		data = raw_data.split('|', 2) # Assume any other pipe is contained
 		assert len(data) == 2 # No idea how to handle anything else
 
 		data = data[1]
 
-		return phpserialize.loads(data, object_hook=phpserialize.phpobject)
+		return phpserialize.loads(data.encode('utf-8'), object_hook=phpserialize.phpobject)
 
 	def encode_session_data(self, data):
 		return '__default|' + phpserialize.dumps(data)
