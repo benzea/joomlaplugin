@@ -8,7 +8,6 @@ class User(object):
 	username = None
 	guest = True
 	uid = 0
-	usertype = None
 	session_id = None
 
 
@@ -129,7 +128,7 @@ class JoomlaSession(Component):
 		if not session_id:
 			return None
 
-		sql = "SELECT username, guest, userid, usertype FROM %s WHERE session_id=%%s AND guest=0 AND time >= (UNIX_TIMESTAMP()-%i);" \
+		sql = "SELECT username, guest, userid FROM %s WHERE session_id=%%s AND guest=0 AND time >= (UNIX_TIMESTAMP()-%i);" \
 		       % (table, self.session_lifetime * 60)
 		cursor.execute(sql, (session_id))
 		if cursor.rowcount > 1:
@@ -146,7 +145,6 @@ class JoomlaSession(Component):
 		user.username = row[0]
 		user.guest = row[1]
 		user.uid = row[2]
-		user.usertype = row[3]
 		user.session_id = session_id
 
 		cnx.close()
