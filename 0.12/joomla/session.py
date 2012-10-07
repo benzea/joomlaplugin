@@ -162,7 +162,7 @@ class JoomlaSession(Component):
 		return user
 
 	def decode_session_data(self, raw_data):
-		data = raw_data.split('|', 2) # Assume any other pipe is contained
+		data = raw_data.split('|', 1) # Assume any other pipe is contained
 		assert len(data) == 2 # No idea how to handle anything else
 
 		data = data[1]
