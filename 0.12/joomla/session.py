@@ -101,7 +101,7 @@ class JoomlaSession(Component):
 		return cookie
 
 	def _get_cookie_name(self, req):
-		if self.cookie_hash is not None:
+		if self.cookie_hash:
 			return self.cookie_hash
 
 		#if not self.live_site:
